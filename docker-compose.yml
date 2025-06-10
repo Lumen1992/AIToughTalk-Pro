@@ -1,0 +1,50 @@
+# Remove the version: '3.8' line as per the warning
+services:
+  # Your FastAPI Application Service
+  app:
+    build: . # Build the image using the SIMPLIFIED Dockerfile
+    image: realtime-voice-chat:latest # Name the image built by 'build:'
+    container_name: realtime-voice-chat-app
+    ports:
+      - "9200:9200"
+    environment:
+      # Point to the 'ollama' service
+      # - OLLAMA_BASE_URL=http://ollama:11434
+      # --- Other App Environment Variables ---
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - MAX_AUDIO_QUEUE_SIZE=${MAX_AUDIO_QUEUE_SIZE:-50}
+      - NVIDIA_VISIBLE_DEVICES=all # For app's PyTorch/DeepSpeed/etc
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - HF_HOME=/home/appuser/.cache/huggingface
+      - TORCH_HOME=/home/appuser/.cache/torch
+      - OPENAI_LOG=debug
+      - HTTPX_LOG_LEVEL=debug
+      - PYTHONHTTPSVERIFY=1  
+      - USE_SSL=true  
+      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt  
+      - CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+      - SSL_CERT_DIR=/etc/ssl/certs  
+    volumes:
+       # Optional: Mount code for live development
+       # - ./code:/app/code
+       # Mount cache directories
+       - ./models/huggingface:/home/appuser/.cache/huggingface
+       - ./models/torch:/home/appuser/.cache/torch
+       - ./models/Lasinya:/app/code/models/Lasinya
+    deploy: # GPU access for the app
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu, compute, utility]
+    restart: unless-stopped
+
+# Define named volumes for persistent data
+volumes:
+  ollama_data:
+    driver: local
+  huggingface_cache:
+    driver: local
+  torch_cache:
+    driver: local
