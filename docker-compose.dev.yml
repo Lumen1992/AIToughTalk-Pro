@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../Dockerfile.backend
+    volumes:
+      - ./code:/app/code
+      - ./backend:/app/backend
+    environment:
+      - LOG_LEVEL=INFO
+      - MAX_AUDIO_QUEUE_SIZE=50
+      - USE_SSL=false
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+    ports:
+      - "9200:9200"
+    networks:
+      - aitoughtalk-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../Dockerfile.frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+    ports:
+      - "3000:3000"
+    networks:
+      - aitoughtalk-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+networks:
+  aitoughtalk-network:
+    driver: bridge 

@@ -1,0 +1,35 @@
+FROM python:3.11-slim
+
+# 安装系统依赖
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libportaudio2 \
+    libportaudiocpp0 \
+    portaudio19-dev \
+    libasound-dev \
+    libsndfile1 \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+# 设置工作目录
+WORKDIR /app
+
+# 复制依赖文件
+COPY requirements.txt .
+
+# 安装Python依赖
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 复制代码
+COPY code/ ./code/
+COPY backend/ ./backend/
+
+# 设置Python路径
+ENV PYTHONPATH=/app/code:/app/backend
+
+# 暴露端口
+EXPOSE 9200
+
+# 启动命令
+CMD ["python", "backend/server.py"] 
